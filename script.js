@@ -1,4 +1,4 @@
-// --- 1. Setup Three.js Scene ---
+
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -23,7 +23,7 @@ const points = new THREE.Points(geometry, material);
 scene.add(points);
 camera.position.z = 5;
 
-// --- 2. Shape Generators ---
+
 function setShape(type) {
     for (let i = 0; i < PARTICLE_COUNT; i++) {
         const i3 = i * 3;
@@ -50,9 +50,9 @@ function setShape(type) {
     }
 }
 
-setShape('heart'); // Default
+setShape('heart'); 
 
-// --- 3. Hand Tracking (MediaPipe) ---
+
 const videoElement = document.getElementById('input_video');
 const statusText = document.getElementById('status');
 
@@ -67,19 +67,15 @@ hands.onResults((results) => {
         const indexTip = hand[8];
         const thumbTip = hand[4];
 
-        // Move system with index finger
         points.position.x = (indexTip.x - 0.5) * -12;
         points.position.y = (indexTip.y - 0.5) * -8;
 
-        // Dynamic Scale based on pinch distance
         const dist = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
         points.scale.setScalar(0.5 + dist * 4);
 
-        // Switch shape based on height
         if (indexTip.y < 0.3) setShape('saturn');
         else if (indexTip.y > 0.7) setShape('heart');
-        
-        // Color shift based on X position
+
         material.color.setHSL(indexTip.x, 1.0, 0.5);
     }
 });
@@ -90,7 +86,6 @@ const cameraUtils = new Camera(videoElement, {
 });
 cameraUtils.start();
 
-// --- 4. Animation Loop ---
 function animate() {
     requestAnimationFrame(animate);
     
