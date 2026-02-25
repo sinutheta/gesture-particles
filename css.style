@@ -1,0 +1,25 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #050505;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#ui {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: white;
+    z-index: 10;
+    pointer-events: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+#status {
+    font-size: 0.8rem;
+    color: #00ffcc;
+}
+
+canvas {
+    display: block;
+}
