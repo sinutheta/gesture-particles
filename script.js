@@ -23,33 +23,49 @@ const points = new THREE.Points(geometry, material);
 scene.add(points);
 camera.position.z = 5;
 
-
 function setShape(type) {
+    currentMode = type;
     for (let i = 0; i < PARTICLE_COUNT; i++) {
         const i3 = i * 3;
-        if (type === 'heart') {
-            const t = (i / PARTICLE_COUNT) * Math.PI * 2;
-            targetArray[i3] = 0.15 * (16 * Math.pow(Math.sin(t), 3));
-            targetArray[i3+1] = 0.15 * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-            targetArray[i3+2] = (Math.random() - 0.5) * 0.2;
-        } else if (type === 'saturn') {
-            if (i < PARTICLE_COUNT * 0.6) { // Sphere core
-                const phi = Math.acos(-1 + (2 * i) / (PARTICLE_COUNT * 0.6));
-                const theta = Math.sqrt(PARTICLE_COUNT * 0.6 * Math.PI) * phi;
-                targetArray[i3] = Math.cos(theta) * Math.sin(phi) * 1.5;
-                targetArray[i3+1] = Math.sin(theta) * Math.sin(phi) * 1.5;
-                targetArray[i3+2] = Math.cos(phi) * 1.5;
-            } else { // Rings
+        
+        if (type === 'saturn') {
+            if (i < PARTICLE_COUNT * 0.5) { 
+                
+                const phi = Math.acos(-1 + (2 * i) / (PARTICLE_COUNT * 0.5));
+                const theta = Math.sqrt(PARTICLE_COUNT * 0.5 * Math.PI) * phi;
+                targetArray[i3] = Math.cos(theta) * Math.sin(phi) * 1.2;
+                targetArray[i3+1] = Math.sin(theta) * Math.sin(phi) * 1.2;
+                targetArray[i3+2] = Math.cos(phi) * 1.2;
+            } else { 
+                // Outer Rings
                 const angle = Math.random() * Math.PI * 2;
-                const radius = 2.2 + Math.random() * 0.8;
+                const radius = 1.8 + Math.random() * 0.7;
                 targetArray[i3] = Math.cos(angle) * radius;
-                targetArray[i3+1] = Math.sin(angle) * 0.2; // Tilt
+                targetArray[i3+1] = (Math.random() - 0.5) * 0.1; 
                 targetArray[i3+2] = Math.sin(angle) * radius;
             }
+        } 
+        
+        else if (type === 'flower') {
+            const t = (i / PARTICLE_COUNT) * Math.PI * 20;
+            const petals = 5;
+            const r = 2 * Math.cos(petals * t);
+            targetArray[i3] = r * Math.cos(t);
+            targetArray[i3+1] = r * Math.sin(t);
+            targetArray[i3+2] = (Math.random() - 0.5) * 0.5;
+        }
+
+        else if (type === 'fireworks') {
+            // Explosion from center
+            const speed = 2 + Math.random() * 3;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            targetArray[i3] = speed * Math.sin(phi) * Math.cos(theta);
+            targetArray[i3+1] = speed * Math.sin(phi) * Math.sin(theta);
+            targetArray[i3+2] = speed * Math.cos(phi);
         }
     }
 }
-
 setShape('heart'); 
 
 
@@ -60,23 +76,31 @@ const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@me
 hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7 });
 
 hands.onResults((results) => {
-    statusText.innerText = results.multiHandLandmarks.length > 0 ? "Hand Detected" : "Searching for hand...";
-    
     if (results.multiHandLandmarks && results.multiHandLandmarks[0]) {
         const hand = results.multiHandLandmarks[0];
         const indexTip = hand[8];
         const thumbTip = hand[4];
+        const wrist = hand[0];
 
         points.position.x = (indexTip.x - 0.5) * -12;
         points.position.y = (indexTip.y - 0.5) * -8;
-
         const dist = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
         points.scale.setScalar(0.5 + dist * 4);
 
-        if (indexTip.y < 0.3) setShape('saturn');
-        else if (indexTip.y > 0.7) setShape('heart');
+        if (indexTip.y < 0.25) {
+            if (currentMode !== 'saturn') setShape('saturn');
+        } 
+        
+        else if (indexTip.y > 0.75) {
+            if (currentMode !== 'flower') setShape('flower');
+        }
 
-        material.color.setHSL(indexTip.x, 1.0, 0.5);
+        else if (dist < 0.05) {
+            setShape('fireworks'); 
+        }
+        
+        
+        material.color.setHSL(indexTip.x, 0.8, 0.5);
     }
 });
 
@@ -91,7 +115,7 @@ function animate() {
     
     const positions = geometry.attributes.position.array;
     for (let i = 0; i < positions.length; i++) {
-        positions[i] += (targetArray[i] - positions[i]) * 0.1; // Smooth transition
+        positions[i] += (targetArray[i] - positions[i]) * 0.1; 
     }
     geometry.attributes.position.needsUpdate = true;
     
